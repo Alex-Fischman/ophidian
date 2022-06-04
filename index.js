@@ -19,11 +19,6 @@ const reset = () => {
 	context.lineCap = "round";
 };
 
-const input = {pressed: false, sx: 0, sy: 0};
-document.addEventListener("pointerdown", _ => input.pressed = true);
-document.addEventListener("pointerup",   _ => input.pressed = false);
-document.addEventListener("pointermove", e => (input.sx = e.x, input.sy = e.y));
-
 const T = Math.sqrt(3), TAU = Math.PI * 2, R = 0.15;
 const hexZero = () => ({q: 0, r: 0});
 const hexAdd = (a, b) => ({q: a.q + b.q, r: a.r + b.r});
@@ -106,9 +101,9 @@ const player = {trail: [], maxLength: 5};
 const spells = [[0, 1], [0, 0, 0], [2, 4]]
 	.map((path, i) => ({on: false, len: 0, path, effect: () => console.log("spell " + i)}));
 
-const update = () => {
+const update = (x, y) => {
 	const matrix = context.getTransform().inverse();
-	const a = vecToHex(matrix.transformPoint(new DOMPoint(input.sx, input.sy)));
+	const a = vecToHex(matrix.transformPoint(new DOMPoint(x, y)));
 	const b = roundHex(hexMul(a, -1 / hexLen(a)));
 	player.trail.unshift(dirs.findIndex(dir => hexEql(dir, b)));
 	if (player.trail.length >= player.maxLength) player.trail.pop();
@@ -129,18 +124,13 @@ const update = () => {
 		} else spell.on = false;
 	}
 };
+document.addEventListener("pointerdown", e => update(e.clientX, e.clientY));
 
 const render = () => {
 	reset();
 	for (const spell of spells)
 		drawSnake(pathReverse(spell.path.slice(spell.len)), R / 2, false, "#CCC");
 	drawSnake(player.trail, R * 2/3, true, "#111");
+	window.requestAnimationFrame(render);
 };
-
-const loop = () => {
-	if (input.pressed) update();
-	input.pressed = false;
-	render();
-	window.requestAnimationFrame(loop);
-};
-window.requestAnimationFrame(loop);
+window.requestAnimationFrame(render);
